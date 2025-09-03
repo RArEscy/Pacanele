@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Slot Machine</title>
+  <style>
+    body {
+      background: radial-gradient(circle at center, #111, #000);
+      color: #fff;
+      font-family: 'Arial Black', sans-serif;
+      text-align: center;
+      padding-top: 60px;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-size: 48px;
+      color: gold;
+      text-shadow: 2px 2px red;
+    }
+
+    #slot-machine {
+      margin: 40px auto;
+      background: #222;
+      border: 5px solid gold;
+      border-radius: 10px;
+      width: 340px;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .reels {
+      display: flex;
+      justify-content: space-around;
+      overflow: hidden;
+      height: 60px;
+      margin-bottom: 20px;
+    }
+
+    .reel {
+      width: 60px;
+      height: 60px;
+      overflow: hidden;
+      border: 2px solid #333;
+      background: #000;
+      border-radius: 5px;
+      position: relative;
+    }
+
+    .symbols {
+      display: flex;
+      flex-direction: column;
+      animation: none;
+    }
+
+    @keyframes spin {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-600px); }
+    }
+
+    button {
+      padding: 10px 30px;
+      font-size: 20px;
+      border: none;
+      background: gold;
+      color: #000;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .confetti {
+      position: absolute;
+      top: 0;
+      width: 10px;
+      height: 10px;
+      background-color: gold;
+      animation: confetti-fall 2s linear forwards;
+      opacity: 0.8;
+      z-index: 999;
+    }
+
+    @keyframes confetti-fall {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(100vh) rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎰 Lucky Slots</h1>
+  <div id="slot-machine">
+    <div class="reels">
+      <div class="reel" id="reel1"><div class="symbols"></div></div>
+      <div class="reel" id="reel2"><div class="symbols"></div></div>
+      <div class="reel" id="reel3"><div class="symbols"></div></div>
+    </div>
+    <button onclick="spin()">Pull Lever</button>
+    <div id="result"></div>
+  </div>
+
+  <!-- Sounds -->
+  <audio id="spin-sound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
+  <audio id="win-sound" src="https://www.fesliyanstudios.com/play-mp3/385" preload="auto"></audio>
+
+  <script>
+    const symbolsList = ["🍒", "🍋", "🍊", "🔔", "💎", "7️⃣"];
+    const spinDuration = 2000;
+
+    const spinSound = document.getElementById("spin-sound");
+    const winSound = document.getElementById("win-sound");
+
+    function getRandomSymbol() {
+      return symbolsList[Math.floor(Math.random() * symbolsList.length)];
+    }
+
+    function generateConfetti() {
+      for (let i = 0; i < 80; i++) {
+        const confetti = document.createElement("div");
+        confetti.classList.add("confetti");
+        confetti.style.left = `${Math.random() * 100}vw`;
+        confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        confetti.style.animationDuration = `${Math.random() * 2 + 2}s`;
+        confetti.style.animationDelay = `${Math.random()}s`;
+        document.body.appendChild(confetti);
+
+        setTimeout(() => confetti.remove(), 4000);
+      }
+    }
+
+    function createReelAnimation(reelId, finalSymbol) {
+      const reel = document.getElementById(reelId).querySelector('.symbols');
+      reel.innerHTML = ''; // Clear old symbols
+
+      const loopSymbols = [];
+      for (let i = 0; i < 10; i++) {
+        loopSymbols.push(getRandomSymbol());
+      }
+
+      loopSymbols.push(finalSymbol); // Final symbol to stop at
+
+      loopSymbols.forEach(symbol => {
+        const symbolDiv = document.createElement("div");
+        symbolDiv.textContent = symbol;
+        symbolDiv.style.height = "60px";
+        symbolDiv.style.display = "flex";
+        symbolDiv.style.alignItems = "center";
+        symbolDiv.style.justifyContent = "center";
+        symbolDiv.style.fontSize = "40px";
+        reel.appendChild(symbolDiv);
+      });
+
+      reel.style.animation = `spin ${spinDuration / 1000}s ease-out forwards`;
+    }
+
+    function spin() {
+      const result = document.getElementById("result");
+      result.textContent = "";
+      result.style.color = "white";
+
+
+      // Determine outcome:
+      const isJackpot = Math.floor(Math.random() * 1000) === 0; // 1 in 1000
+
+      let finalSymbols = [];
+
+      if (isJackpot) {
+        const jackpotSymbol = getRandomSymbol();
+        finalSymbols = [jackpotSymbol, jackpotSymbol, jackpotSymbol];
+      } else {
+        // Normal random
+        finalSymbols = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
+      }
+
+      createReelAnimation("reel1", finalSymbols[0]);
+      createReelAnimation("reel2", finalSymbols[1]);
+      createReelAnimation("reel3", finalSymbols[2]);
+
+      setTimeout(() => {
+  const [r1, r2, r3] = finalSymbols;
+
+  if (r1 === r2 && r2 === r3) {
+    result.textContent = "🎉 JACKPOT!!! 🎉";
+    result.style.color = "lime";
+    winSound.play();
+    generateConfetti();
+  } else {
+    result.textContent = "😢 Try again!";
+    result.style.color = "red";
+  }
+
+  // Reset animation
+  document.querySelectorAll('.symbols').forEach(reel => {
+    reel.style.animation = "none";
+  });
+
+}, spinDuration);
+
+    }
+  </script>
+</body>
+</html>
